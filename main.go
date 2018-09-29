@@ -3,18 +3,22 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
+	"syscall"
 )
 
 func main() {
 	// Setup the command tobe run
 	cmd := exec.Command("wc", "-c")
 
-	// Get stdin and stdout
-	stdin, err := cmd.StdinPipe()
+	// Get stdin reader
+	stdinReader, stdinWriter, err := stdinPipe(cmd)
 	if err != nil {
 		panic(err)
 	}
+
+	// Get stdout reader
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -24,12 +28,14 @@ func main() {
 	if err := cmd.Start(); err != nil {
 		panic(err)
 	}
+	// We no longer need this!
+	stdinReader.Close()
 
 	// Write the data
-	if _, err := stdin.Write([]byte("abcracadabra")); err != nil {
+	if _, err := syscall.Write(int(stdinWriter.Fd()), []byte("abcdefg")); err != nil {
 		panic(err)
 	}
-	stdin.Close()
+	stdinWriter.Close()
 
 	// Get the result
 	result, err := ioutil.ReadAll(stdout)
@@ -45,4 +51,14 @@ func main() {
 	// Print the result
 	fmt.Println(string(result))
 	return
+}
+
+func stdinPipe(cmd *exec.Cmd) (*os.File, *os.File, error) {
+	stdinReader, stdinWriter, err := os.Pipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	cmd.Stdin = stdinReader
+
+	return stdinReader, stdinWriter, nil
 }
