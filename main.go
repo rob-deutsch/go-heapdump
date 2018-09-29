@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"syscall"
+	"runtime/debug"
 )
 
 func main() {
@@ -32,9 +32,7 @@ func main() {
 	stdinReader.Close()
 
 	// Write the data
-	if _, err := syscall.Write(int(stdinWriter.Fd()), []byte("abcdefg")); err != nil {
-		panic(err)
-	}
+	debug.WriteHeapDump(stdinWriter.Fd())
 	stdinWriter.Close()
 
 	// Get the result
