@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"runtime/debug"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -41,13 +43,13 @@ func main() {
 		panic(err)
 	}
 
-	// Wait for the command to exit
-	// if err = cmd.Wait(); err != nil {
-	// 	panic(err)
-	// }
-
 	// Print the result
-	fmt.Println(string(result))
+	strSize := strings.Trim(string(result), " \r\n")
+	size, err := strconv.ParseUint(strSize, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(size)
 	return
 }
 
